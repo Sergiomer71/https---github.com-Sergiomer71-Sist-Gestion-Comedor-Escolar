@@ -2,14 +2,49 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../core/contexts/AuthContext';
 import { ROLES } from '../../core/config/constants';
+import { localDB } from '../../services/storage/localDB';
 import { Menu, X, Home, Users, Calendar, CheckSquare, FileText, Settings, LogOut } from 'lucide-react';
 
 const DefaultLayout = () => {
   const { currentUser, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [logo, setLogo] = useState(null);
   const location = useLocation();
 
   const isAdmin = currentUser?.role === ROLES.ADMIN;
+
+  React.useEffect(() => {
+    const savedLogo = localDB.getRaw('logoInstitucion');
+    if (savedLogo && savedLogo.startsWith('data:image')) {
+      setLogo(savedLogo);
+    } else {
+      setLogo(null);
+    }
+    
+    // Escuchar cambios en storage para actualizar el logo si se cambia en Settings
+    const handleStorageChange = (e) => {
+      if (e.key === 'logoInstitucion') {
+        setLogo(e.newValue || null);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Polling opcional o dispatchEvent personalizado para actualización instantánea en la misma pestaña
+    const checkLogo = setInterval(() => {
+      const currentLogo = localDB.getRaw('logoInstitucion');
+      const isValid = currentLogo && currentLogo.startsWith('data:image');
+      if (isValid && currentLogo !== logo) {
+        setLogo(currentLogo);
+      } else if (!isValid && logo !== null) {
+        setLogo(null);
+      }
+    }, 2000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(checkLogo);
+    };
+  }, [logo]);
 
   const getLinks = () => {
     if (isAdmin) {
@@ -57,11 +92,21 @@ const DefaultLayout = () => {
         flex flex-col
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="p-6 text-center border-b border-slate-100 flex-shrink-0">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Comedor Escolar
-          </h1>
-          <p className="text-sm text-slate-500 mt-1 capitalize">{currentUser?.name}</p>
+        <div className="p-6 border-b border-slate-100 flex-shrink-0">
+          <div className="flex items-center justify-center gap-3">
+            {logo && logo.startsWith('data:image') && (
+              <img 
+                src={logo} 
+                alt="" 
+                className="h-10 w-10 object-contain rounded-md"
+                onError={() => setLogo(null)}
+              />
+            )}
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Comedor Escolar
+            </h1>
+          </div>
+          <p className="text-sm text-slate-500 mt-1 capitalize text-center">{currentUser?.name}</p>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { exportDatabase, importDatabase, clearDatabase } from '../../utils/exportImport';
 import { userService } from '../../modules/users/userService';
-import { Database, Download, Upload, Users, Plus, Trash2, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { localDB } from '../../services/storage/localDB';
+import { Database, Download, Upload, Users, Plus, Trash2, ShieldAlert, AlertTriangle, Image as ImageIcon, Save, X as CloseIcon } from 'lucide-react';
 
 const Settings = () => {
   const fileInputRef = useRef(null);
@@ -9,6 +10,12 @@ const Settings = () => {
   const [celadoras, setCeladoras] = useState([]);
   const [newCeladoraName, setNewCeladoraName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  
+  // Estados para el Logo
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [logoStatus, setLogoStatus] = useState({ type: '', msg: '' });
+  const logoInputRef = useRef(null);
 
   const loadCeladoras = () => {
     setCeladoras(userService.getAllCeladoras());
@@ -16,14 +23,64 @@ const Settings = () => {
 
   useEffect(() => {
     loadCeladoras();
+    // Cargar logo existente
+    const savedLogo = localDB.getRaw('logoInstitucion');
+    if (savedLogo && savedLogo.startsWith('data:image')) {
+      setLogoPreview(savedLogo);
+    }
   }, []);
+
+  const handleLogoSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar tipo
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      setLogoStatus({ type: 'error', msg: 'Formato no válido. Use PNG o JPG.' });
+      return;
+    }
+
+    // Validar tamaño (500KB)
+    if (file.size > 500 * 1024) {
+      setLogoStatus({ type: 'error', msg: 'La imagen supera los 500KB.' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setLogoPreview(event.target.result);
+      setSelectedFile(event.target.result);
+      setLogoStatus({ type: '', msg: '' });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveLogo = () => {
+    if (!selectedFile) return;
+    
+    const success = localDB.saveRaw('logoInstitucion', selectedFile);
+    if (success) {
+      setLogoStatus({ type: 'success', msg: 'Logo guardado correctamente.' });
+      setSelectedFile(null);
+    } else {
+      setLogoStatus({ type: 'error', msg: 'Error al guardar el logo.' });
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    if (window.confirm('¿Desea eliminar el logo actual?')) {
+      localDB.saveRaw('logoInstitucion', '');
+      setLogoPreview(null);
+      setSelectedFile(null);
+      setLogoStatus({ type: 'success', msg: 'Logo eliminado.' });
+    }
+  };
 
   const handleExport = () => {
     exportDatabase();
   };
 
   const handleImportClick = () => {
-    // Confirma antes de abrir dialogo para asustar/prevenir
     if(window.confirm('IMPORTANTE: Importar una base de datos reemplazará todos los datos actuales del sistema. ¿Desea continuar?')) {
       fileInputRef.current.click();
     }
@@ -35,7 +92,7 @@ const Settings = () => {
       const secondConfirm = window.confirm('Esta acción no se puede deshacer. ¿Realmente desea borrar TODO y volver al estado inicial?');
       if (secondConfirm) {
         clearDatabase();
-        userService.initMainAdmin(); // Re-inicializar admin por defecto
+        userService.initMainAdmin();
         alert('Se han eliminado todos los datos. El sistema se reiniciará.');
         window.location.reload();
       }
@@ -59,7 +116,7 @@ const Settings = () => {
       }
     };
     reader.readAsText(file);
-    e.target.value = null; // reset
+    e.target.value = null;
   };
 
   const handleAddCeladora = (e) => {
@@ -92,6 +149,83 @@ const Settings = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
+        {/* Panel Logotipo */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+          <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+            <ImageIcon className="text-blue-600" size={24} />
+            <h2 className="text-lg font-bold text-slate-800">Logotipo de la Institución</h2>
+          </div>
+          
+          <div className="p-6 flex-1 flex flex-col justify-between space-y-6">
+            <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 min-h-[180px] relative">
+              {logoPreview && logoPreview.startsWith('data:image') ? (
+                <div className="relative group flex flex-col items-center">
+                  <img 
+                    src={logoPreview} 
+                    alt="Vista previa" 
+                    className="max-h-32 max-w-full object-contain rounded-lg shadow-sm bg-white p-2"
+                    onError={() => setLogoPreview(null)}
+                  />
+                  <button 
+                    onClick={handleRemoveLogo}
+                    className="mt-4 flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                  >
+                    <Trash2 size={14} /> Eliminar logotipo actual
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center space-y-2">
+                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <ImageIcon size={32} className="text-slate-300" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-600">No hay un logotipo configurado</p>
+                  <p className="text-xs text-slate-400">Formatos: PNG, JPG (Máx. 500KB)</p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-semibold text-slate-700">Subir nueva imagen:</label>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => logoInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-slate-200 hover:border-blue-500 rounded-xl font-bold bg-white text-slate-700 hover:text-blue-700 transition-all shadow-sm"
+                  >
+                    <Upload size={20} />
+                    {selectedFile ? 'Cambiar Selección' : 'Seleccionar Archivo'}
+                  </button>
+                  
+                  {selectedFile && (
+                    <button 
+                      onClick={handleSaveLogo}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-100"
+                    >
+                      <Save size={20} /> Guardar
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {logoStatus.msg && (
+                <div className={`p-3 rounded-lg text-sm text-center font-medium ${
+                  logoStatus.type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'
+                }`}>
+                  {logoStatus.msg}
+                </div>
+              )}
+
+              <input 
+                type="file"
+                ref={logoInputRef}
+                className="hidden"
+                accept="image/png, image/jpeg, image/jpg"
+                onChange={handleLogoSelect}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Panel Celadoras */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center gap-2">

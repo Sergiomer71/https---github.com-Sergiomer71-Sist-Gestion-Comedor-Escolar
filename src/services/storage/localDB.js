@@ -79,7 +79,25 @@ export const localDB = {
     
     if (list.length === filtered.length) throw new Error('Registro no encontrado para eliminar.');
     
-    localDB.set(key, filtered);
-    return true;
+  },
+
+  /**
+   * Lee un valor crudo (string) de LocalStorage.
+   */
+  getRaw: (key) => {
+    return localStorage.getItem(key) || null;
+  },
+
+  /**
+   * Guarda un valor crudo (string) en LocalStorage.
+   */
+  saveRaw: (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (e) {
+      console.error(`Error guardando ${key} en LocalStorage:`, e);
+      return false;
+    }
   }
 };
