@@ -11,8 +11,9 @@ import Dashboard from './pages/dashboard/Dashboard';
 import StudentsList from './pages/students/StudentsList';
 import Enrollments from './pages/enrollments/Enrollments';
 import Attendance from './pages/attendance/Attendance';
-import Reports from './pages/reports/Reports';
+import ReportsPanel from './pages/reports/ReportsPanel';
 import Settings from './pages/settings/Settings';
+import InstallPrompt from './ui/components/InstallPrompt';
 
 /**
  * Componentes de protección de rutas
@@ -45,7 +46,7 @@ function App() {
             <Route path="dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
             <Route path="alumnos" element={<AdminRoute><StudentsList /></AdminRoute>} />
             <Route path="inscripciones" element={<AdminRoute><Enrollments /></AdminRoute>} />
-            <Route path="reportes" element={<AdminRoute><Reports /></AdminRoute>} />
+            <Route path="reportes" element={<AdminRoute><ReportsPanel /></AdminRoute>} />
             <Route path="configuracion" element={<AdminRoute><Settings /></AdminRoute>} />
             
             {/* Rutas para todos (Admin y Celadora) */}
@@ -53,6 +54,7 @@ function App() {
           </Route>
         </Routes>
       </Router>
+      <InstallPrompt />
     </AuthProvider>
   );
 }

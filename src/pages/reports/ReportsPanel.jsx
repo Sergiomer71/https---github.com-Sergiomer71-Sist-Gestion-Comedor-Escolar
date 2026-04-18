@@ -6,7 +6,7 @@ import { attendanceService } from '../../modules/attendance/attendanceService';
 import { getCurrentDate, formatDateDisplay, getMonthName } from '../../utils/dateUtils';
 import { FileDown, Calendar, Users, BarChart } from 'lucide-react';
 
-const Reports = () => {
+const ReportsPanel = () => {
   const [selectedReport, setSelectedReport] = useState('daily');
   const [reportDate, setReportDate] = useState(getCurrentDate());
   
@@ -217,4 +217,4 @@ const Reports = () => {
   );
 };
 
-export default Reports;
+export default ReportsPanel;
