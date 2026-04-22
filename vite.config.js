@@ -21,7 +21,7 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         scope: '/',
-        id: '/v2',
+        id: '/v3',
         icons: [
           {
             src: 'web-app-manifest-192x192.png',

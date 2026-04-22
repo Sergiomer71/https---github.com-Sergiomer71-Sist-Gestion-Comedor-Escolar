@@ -84,10 +84,10 @@ const ReportsPanel = () => {
     }).filter(Boolean);
 
     generatePDF(
-      `Reporte Mensual - ${getMonthName(reportMonth)}`,
+      `Reporte Por Mes - ${getMonthName(reportMonth)}`,
       ['Alumno', 'Curso', 'Total Asistencias'],
       body,
-      `reporte_mensual_mes_${reportMonth}.pdf`
+      `reporte_mes_${reportMonth}.pdf`
     );
   };
 
@@ -149,7 +149,7 @@ const ReportsPanel = () => {
             className={`border-2 rounded-2xl p-6 cursor-pointer transition-all ${selectedReport === 'monthly' ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-100 hover:border-slate-300 bg-white'}`}
           >
             <BarChart className={`mb-4 ${selectedReport === 'monthly' ? 'text-indigo-600' : 'text-slate-400'}`} size={32} />
-            <h3 className={`font-semibold ${selectedReport === 'monthly' ? 'text-indigo-900' : 'text-slate-700'}`}>Mensual</h3>
+            <h3 className={`font-semibold ${selectedReport === 'monthly' ? 'text-indigo-900' : 'text-slate-700'}`}>Por Mes</h3>
             <p className="text-sm text-slate-500 mt-1">Total acumulado de asistencia de cada alumno en el mes.</p>
           </div>
 
