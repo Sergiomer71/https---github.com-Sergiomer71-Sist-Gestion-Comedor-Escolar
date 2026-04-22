@@ -3,10 +3,12 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../core/contexts/AuthContext';
 import { ROLES } from '../../core/config/constants';
 import { localDB } from '../../services/storage/localDB';
-import { Menu, X, Home, Users, Calendar, CheckSquare, FileText, Settings, LogOut } from 'lucide-react';
+import { usePWAInstall } from '../components/InstallPrompt';
+import { Menu, X, Home, Users, Calendar, CheckSquare, FileText, Settings, LogOut, Download } from 'lucide-react';
 
 const DefaultLayout = () => {
   const { currentUser, logout } = useAuth();
+  const pwa = usePWAInstall();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logo, setLogo] = useState(null);
   const location = useLocation();
@@ -132,7 +134,17 @@ const DefaultLayout = () => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-100 flex-shrink-0">
+        <div className="p-4 border-t border-slate-100 flex-shrink-0 space-y-2">
+          {/* Botón instalar PWA — visible solo si la app no está instalada y el browser lo soporta */}
+          {pwa && !pwa.isInstalled && pwa.deferredPrompt && (
+            <button
+              onClick={pwa.triggerInstall}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-blue-600 hover:bg-blue-50 font-medium transition-colors border border-blue-200"
+            >
+              <Download size={20} />
+              Instalar App
+            </button>
+          )}
           <button 
             onClick={logout}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-red-600 hover:bg-red-50 font-medium transition-colors"
