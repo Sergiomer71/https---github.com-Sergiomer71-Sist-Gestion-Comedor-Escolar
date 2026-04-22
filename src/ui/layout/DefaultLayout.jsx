@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/contexts/AuthContext';
 import { ROLES } from '../../core/config/constants';
 import { localDB } from '../../services/storage/localDB';
@@ -12,6 +12,12 @@ const DefaultLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logo, setLogo] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   const isAdmin = currentUser?.role === ROLES.ADMIN;
 
@@ -146,7 +152,7 @@ const DefaultLayout = () => {
             </button>
           )}
           <button 
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-red-600 hover:bg-red-50 font-medium transition-colors"
           >
             <LogOut size={20} />
