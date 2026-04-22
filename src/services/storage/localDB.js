@@ -70,15 +70,14 @@ export const localDB = {
     return list[index];
   },
 
-  /**
-   * Borra un elemento de la colección por ID
-   */
   remove: (key, id) => {
     const list = localDB.get(key);
     const filtered = list.filter(item => item.id !== id);
     
     if (list.length === filtered.length) throw new Error('Registro no encontrado para eliminar.');
     
+    localDB.set(key, filtered);
+    return true;
   },
 
   /**
